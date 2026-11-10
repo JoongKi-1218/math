@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>코흐눈송이 프랙탈</title>
+<style>
+  /* ===== 내 수학 실험실 공통 테마 =====
+     이 :root 블록과 아래 "공통 셸" 영역은 모든 도구가 동일하게 유지합니다.
+     도구별 CSS는 파일 아래쪽 "도구 전용" 영역에만 추가하세요. */
+  :root{
+    --bg:#f2f0e9;
+    --panel:#fbf9f3;
+    --panel-2:#f4f1e9;
+    --line:#d8d2c7;
+    --border-soft:#eee9df;
+    --text:#15171a;
+    --muted:#6b6f74;
+    --faint:#9a958a;
+    --accent:#ff5a30;
+    --accent-weak:rgba(255,90,48,.14);
+    --lime:#d9f24f;
+    --shadow:0 10px 28px rgba(21,23,26,.055);
+    --radius:16px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:
+      linear-gradient(rgba(21,23,26,.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(21,23,26,.035) 1px, transparent 1px),
+      var(--bg);
+    background-size:34px 34px;
+    color:var(--text);
+    font-family:Pretendard,"Apple SD Gothic Neo","Noto Sans KR",-apple-system,BlinkMacSystemFont,sans-serif;
+    letter-spacing:-.015em;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  button,input,select{font:inherit;color:inherit}
+  .num{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+
+  .app{width:100%;max-width:1180px;margin:0 auto;padding:12px;display:flex;flex-direction:column;gap:10px}
+
+  /* ---- 공통 셸: 상단바 ---- */
+  .topbar{
+    min-height:72px;
+    display:flex;
+    gap:14px;
+    justify-content:space-between;
+    align-items:center;
+    padding:10px 14px;
+    background:rgba(242,240,233,.90);
+    border:1px solid var(--line);
+    border-radius:18px;
+    backdrop-filter:blur(14px);
+  }
+  .brand-area{display:flex;align-items:center;gap:18px;min-width:0}
+  .home-link{
+    display:flex;align-items:center;gap:10px;flex:none;
+    color:var(--text);text-decoration:none;
+    padding:7px 10px 7px 8px;border-radius:12px;
+    transition:background .18s ease;
+  }
+  .home-link:hover{background:#e7e3d9}
+  .home-arrow{
+    width:31px;height:31px;border:1px solid #c9c4b8;border-radius:50%;
+    display:grid;place-items:center;font-size:16px;line-height:1;background:#fbf9f3;
+  }
+  .brand-copy{display:block;line-height:1.15}
+  .brand-copy strong{display:block;font-size:14px;font-weight:800;letter-spacing:-.035em}
+  .brand-copy small{
+    display:block;margin-top:4px;color:#8a8d90;
+    font-family:ui-monospace,SFMono-Regular,Consolas,monospace;
+    font-size:7.5px;letter-spacing:.13em;white-space:nowrap;
+  }
+  .top-divider{width:1px;height:34px;background:#d3cec3;flex:none}
+  .title-row{display:block;min-width:0}
+  .eyebrow{
+    display:flex;align-items:center;gap:7px;margin-bottom:4px;
+    color:#7b7770;font-size:10px;font-weight:750;white-space:nowrap;
+  }
+  .eyebrow span{display:block;width:18px;height:2px;background:var(--accent)}
+  h1{
+    font-size:clamp(18px,1.25vw,24px);
+    margin:0;
+    font-weight:800;letter-spacing:-.04em;white-space:nowrap;
+  }
+  h1 em{
+    font-style:normal;font-weight:500;
+    background:linear-gradient(transparent 60%,var(--lime) 0);
+    padding:0 .04em;
+  }
+  .subtitle{margin:4px 0 0;color:#666b6f;font-size:11.5px}
+  .badge{
+    display:inline-flex;align-items:center;gap:7px;flex:none;
+    background:#15171a;color:#fff;border:0;
+    border-radius:999px;padding:8px 12px;font-weight:700;font-size:12px;white-space:nowrap;
+  }
+  .dot{width:9px;height:9px;border-radius:50%;background:#73c48f}
+
+  /* ---- 공통 셸: 패널 ----
+     기본은 "넓은 그림 영역 + 좁은 설정 영역" 2단입니다.
+     패널 수가 다르면 grid-template-columns만 바꾸고, 좁은 화면에서 1단으로
+     떨어지는 @media (max-width:900px) 규칙은 남겨 두세요. */
+  .workspace{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(300px,1fr);gap:10px}
+  .panel{
+    min-width:0;
+    display:flex;flex-direction:column;
+    background:rgba(251,249,243,.96);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    overflow:hidden;
+  }
+  .panel-head{
+    flex:0 0 auto;
+    padding:12px 14px;
+    border-bottom:1px solid var(--line);
+    background:rgba(247,244,236,.92);
+  }
+  .panel-title{
+    font-size:15px;font-weight:800;letter-spacing:-.025em;
+    position:relative;padding-left:10px;
+  }
+  .panel-title::before{
+    content:"";position:absolute;left:0;top:.15em;bottom:.15em;
+    width:3px;border-radius:3px;background:var(--accent);
+  }
+  .panel-desc{color:#74716b;font-size:11.5px;margin-top:5px;line-height:1.45}
+  .panel-body{flex:1;min-height:0;padding:14px}
+
+  /* ---- 공통 셸: 버튼 ---- */
+  .btn{
+    border:1px solid #c9c4b8;background:#fbf9f3;color:#15171a;
+    border-radius:999px;font-weight:700;font-size:12.5px;
+    padding:9px 14px;cursor:pointer;line-height:1;
+    transition:background .15s ease,border-color .15s ease,transform .15s ease;
+  }
+  .btn:hover:not(:disabled){transform:translateY(-1px);border-color:#15171a;background:#f2efe6}
+  .btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+  .btn.primary{background:#15171a;color:#fff;border-color:#15171a}
+  .btn.primary:hover:not(:disabled){background:#2b2e31}
+  .btn.danger{color:#a73b2c}
+  .btn.icon-btn{width:38px;height:38px;padding:0;border-radius:10px;font-size:18px;display:grid;place-items:center}
+
+  /* ---- 공통 셸: 그림 영역 (캔버스·SVG) ---- */
+  .chart-wrap{background:#fff;border:1px solid #e3ded4;border-radius:12px;overflow:hidden;position:relative}
+  .chart-wrap canvas,.chart-wrap svg{display:block;width:100%;height:100%}
+
+  /* ---- 공통 셸: 입력·지표·안내 (쓰지 않는 것은 지우세요) ---- */
+  .controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+  .control{display:flex;flex-direction:column;gap:5px}
+  .control label{font-size:11px;color:var(--muted);font-weight:800}
+  .control input{
+    width:100%;padding:9px 10px;font-weight:700;
+    border:1px solid #d3cec3;background:#fff;color:var(--text);border-radius:10px;
+  }
+  .control input:focus{outline:3px solid rgba(217,242,79,.42);border-color:#9aa64b}
+  .control input[type="range"]{
+    padding:0;height:22px;border:0;border-radius:0;background:transparent;
+    accent-color:#15171a;cursor:pointer;
+  }
+  .checkbox-control{
+    justify-content:center;min-height:58px;padding:8px 10px;
+    border:1px solid var(--line);background:var(--panel-2);border-radius:12px;
+  }
+  .checkbox-control label{display:flex;align-items:center;gap:8px;color:var(--text);cursor:pointer;font-size:11px}
+  .checkbox-control input{width:17px;height:17px;padding:0;accent-color:#15171a;cursor:pointer}
+
+  .metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+  .metric{background:var(--panel-2);border:1px solid #ddd7cc;border-radius:11px;padding:8px 9px;min-width:0}
+  .metric .label{color:#77736d;font-size:10px;font-weight:800;margin-bottom:3px}
+  .metric .value{
+    font-size:15px;font-weight:850;color:var(--text);
+    font-variant-numeric:tabular-nums;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+
+  .formula{
+    background:#15171a;color:#f6f2e9;border:1px solid #15171a;border-radius:12px;
+    padding:9px 10px;line-height:1.55;font-size:12px;
+    font-family:ui-monospace,SFMono-Regular,Consolas,monospace;overflow:auto;
+  }
+  .note{
+    padding:10px 12px;border-radius:10px;
+    background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;
+    font-size:11px;line-height:1.5;
+  }
+  .note b{color:#7c2d12;font-weight:800}
+  .status{min-height:19px;font-size:11px;line-height:1.4;font-weight:750;color:var(--muted)}
+  .status.ok{color:#32724f}
+  .status.error{color:#b44634}
+
+  .legend{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center}
+  .legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
+  .legend-item i{width:11px;height:11px;border-radius:3px;flex:none}
+
+  /* ---- 공통 셸: 반응형 (이 3개 블록은 그대로 유지) ----
+     주의: .topbar에 align-items:stretch를 쓰면 알약 모양 .badge가
+     줄바꿈된 제목 높이만큼 세로로 늘어나 거대한 원처럼 깨집니다. */
+  @media (max-width:1080px){
+    .brand-copy small{display:none}
+    .brand-copy strong{font-size:13px}
+    .top-divider{height:28px}
+  }
+  @media (max-width:900px){
+    .workspace{grid-template-columns:1fr}
+  }
+  @media (max-width:820px){
+    .topbar{align-items:flex-start}
+    .brand-area{align-items:flex-start}
+    .home-link{padding-left:2px}
+    .top-divider{display:none}
+    .brand-copy{display:none}
+    .title-row{display:block}
+    h1{white-space:normal}
+    .eyebrow{white-space:normal}
+    .badge{display:none}
+  }
+  @media (max-width:520px){
+    .app{padding:7px}
+    .topbar{border-radius:14px;padding:9px 10px}
+    .home-arrow{width:34px;height:34px}
+    h1{font-size:20px;line-height:1.25}
+    .subtitle{font-size:11px;white-space:normal}
+    .panel{border-radius:14px}
+    .panel-head{padding:12px}
+    .btn{min-height:40px}
+    .controls{grid-template-columns:1fr}
+  }
+
+
+  /* ===== 도구 전용 CSS는 여기부터 ===== */
+  .stage{aspect-ratio:1/0.9;min-height:300px}
+  .stage canvas{touch-action:none}
+  .level-row{display:flex;align-items:center;gap:10px}
+  .level-row input{flex:1}
+  .level-val{min-width:2.2em;text-align:right;font-weight:850;font-size:18px}
+  .seg{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .seg .btn.on{background:#15171a;color:#fff;border-color:#15171a}
+  .metrics.one{grid-template-columns:1fr}
+  .metric .sub{color:var(--faint);font-size:10.5px;margin-top:2px;font-variant-numeric:tabular-nums}
+  .metric .value.wrap{white-space:normal;overflow:visible}
+  table.tbl{width:100%;border-collapse:collapse;font-size:11.5px}
+  table.tbl th,table.tbl td{padding:5px 6px;text-align:right;border-bottom:1px solid var(--border-soft)}
+  table.tbl th{color:var(--muted);font-weight:800;font-size:10.5px;background:var(--panel-2)}
+  table.tbl tr.cur td{background:var(--accent-weak);font-weight:800}
+  table.tbl tr{cursor:pointer}
+  .tbl-wrap{overflow:auto;border:1px solid var(--line);border-radius:10px;background:#fff}
+  .formula sup{font-size:.75em}
+  .stack{display:flex;flex-direction:column;gap:12px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="brand-area">
+      <!-- 홈으로 돌아가는 링크: ../#tools 를 바꾸지 마세요 -->
+      <a class="home-link" href="../#tools" aria-label="메인으로">
+        <span class="home-arrow">←</span>
+        <span class="brand-copy">
+          <strong data-site="name">내 수학 실험실</strong>
+          <small data-site="englishName">MATHEMATICS LABORATORY</small>
+        </span>
+      </a>
+      <span class="top-divider" aria-hidden="true"></span>
+      <div class="title-row">
+        <div class="eyebrow"><span></span>미적분Ⅱ · 수열의 극한과 프랙탈</div>
+        <h1>코흐눈송이 <em>프랙탈</em></h1>
+        <p class="subtitle">단계를 올릴 때마다 둘레는 무한히 커지는데 넓이는 일정한 값에 가까워집니다.</p>
+      </div>
+    </div>
+    <div class="badge"><span class="dot"></span><span id="stateBadge">준비됨</span></div>
+  </div>
+
+  <div class="workspace">
+    <section class="panel">
+      <div class="panel-head">
+        <div class="panel-title">코흐눈송이</div>
+        <div class="panel-desc" id="figDesc">정삼각형의 각 변을 3등분하고, 가운데 부분 위에 정삼각형을 세운 뒤 그 밑변을 지우는 과정을 반복합니다.</div>
+      </div>
+      <div class="panel-body">
+        <div class="chart-wrap stage" id="stage"><canvas id="cv" aria-label="코흐눈송이 그림"></canvas></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div class="panel-title">탐구 설정</div>
+        <div class="panel-desc">단계 n을 바꾸며 변의 수·둘레·넓이의 변화를 관찰합니다.</div>
+      </div>
+      <div class="panel-body stack">
+        <div class="control">
+          <label for="lvl">단계 n</label>
+          <div class="level-row">
+            <input id="lvl" type="range" min="0" max="7" step="1" value="3">
+            <span class="level-val num" id="lvlVal">3</span>
+          </div>
+        </div>
+
+        <div class="seg">
+          <button class="btn on" type="button" id="modeFlake">눈송이 (삼각형)</button>
+          <button class="btn" type="button" id="modeCurve">코흐곡선 (선분 1개)</button>
+        </div>
+
+        <div class="controls">
+          <div class="checkbox-control control"><label><input type="checkbox" id="fillChk" checked> 안쪽 색칠</label></div>
+          <div class="checkbox-control control"><label><input type="checkbox" id="ghostChk" checked> 이전 단계 겹쳐 보기</label></div>
+        </div>
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn primary" type="button" id="playBtn">▶ 자동 재생</button>
+          <button class="btn" type="button" id="resetBtn">초기화</button>
+        </div>
+
+        <div class="metrics" id="metrics"></div>
+
+        <div class="formula" id="formula"></div>
+
+        <div class="tbl-wrap">
+          <table class="tbl" id="tbl"></table>
+        </div>
+
+        <div class="note"><b>관찰 질문</b> n이 커질 때 둘레와 넓이는 각각 어떻게 될까요? 한 변의 길이가 1인 정삼각형에서 출발하면 넓이의 극한은 처음 넓이의 몇 배일까요? 표의 행을 누르면 그 단계로 이동합니다.</div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- 홈페이지 이름을 site-config.js에서 가져와 상단에 표시합니다 -->
+<script src="../site-config.js"></script>
+<script>
+  if (typeof SITE !== "undefined") {
+    document.querySelectorAll("[data-site]").forEach(el => {
+      if (SITE[el.dataset.site]) el.textContent = SITE[el.dataset.site];
+    });
+  }
+</script>
+<script>
+  // ===== 도구 전용 JavaScript는 여기부터 =====
+  (function(){
+    const MAX = 7;
+    const $ = id => document.getElementById(id);
+    const cv = $("cv"), ctx = cv.getContext("2d");
+    const state = { n: 3, mode: "flake", fill: true, ghost: true, timer: null };
+
+    // ---------- 계산 (처음 정삼각형의 한 변의 길이 = 1) ----------
+    const gcd = (a,b) => b ? gcd(b, a % b) : a;
+    function frac(num, den){ const g = gcd(num, den); return [num/g, den/g]; }
+    function fracText(f){ return f[1] === 1 ? String(f[0]) : f[0] + "/" + f[1]; }
+    function calc(n, mode){
+      if (mode === "flake"){
+        return {
+          sides: 3 * Math.pow(4, n),
+          len: frac(1, Math.pow(3, n)),
+          per: frac(3 * Math.pow(4, n), Math.pow(3, n)),
+          // 넓이 배율 = 8/5 - 3/5 (4/9)^n = (8*9^n - 3*4^n) / (5*9^n)
+          area: frac(8 * Math.pow(9, n) - 3 * Math.pow(4, n), 5 * Math.pow(9, n))
+        };
+      }
+      return {
+        sides: Math.pow(4, n),
+        len: frac(1, Math.pow(3, n)),
+        per: frac(Math.pow(4, n), Math.pow(3, n))
+      };
+    }
+    const dec = (f, d) => (f[0] / f[1]).toFixed(d);
+
+    // ---------- 도형 생성 ----------
+    function koch(points, closed){
+      const out = [];
+      const m = closed ? points.length : points.length - 1;
+      for (let i = 0; i < m; i++){
+        const P = points[i], Q = points[(i + 1) % points.length];
+        const dx = Q[0] - P[0], dy = Q[1] - P[1];
+        const A = [P[0] + dx / 3, P[1] + dy / 3];
+        const B = [P[0] + 2 * dx / 3, P[1] + 2 * dy / 3];
+        const k = Math.sqrt(3) / 6;                      // 바깥쪽(진행 방향의 왼쪽)으로 솟는 꼭짓점
+        const T = [(P[0] + Q[0]) / 2 + k * dy, (P[1] + Q[1]) / 2 - k * dx];
+        out.push(P, A, T, B);
+      }
+      if (!closed) out.push(points[points.length - 1]);
+      return out;
+    }
+    const cache = {};
+    function shape(n, mode){
+      const key = mode + n;
+      if (cache[key]) return cache[key];
+      let pts = mode === "flake"
+        ? [[0, -1], [Math.sqrt(3) / 2, 0.5], [-Math.sqrt(3) / 2, 0.5]]   // 화면 좌표(y 아래), 시계 방향
+        : [[-1, 0.5], [1, 0.5]];
+      for (let i = 0; i < n; i++) pts = koch(pts, mode === "flake");
+      return (cache[key] = pts);
+    }
+
+    // ---------- 그리기 ----------
+    function resize(){
+      const r = $("stage").getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      cv.width = Math.round(r.width * dpr);
+      cv.height = Math.round(r.height * dpr);
+      draw();
+    }
+    function path(pts, closed){
+      ctx.beginPath();
+      ctx.moveTo(pts[0][0], pts[0][1]);
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+      if (closed) ctx.closePath();
+    }
+    function draw(){
+      const W = cv.width, H = cv.height;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, W, H);
+      ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, W, H);
+
+      const flake = state.mode === "flake";
+      // 장면 좌표(약 -1.05~1.05)를 캔버스에 맞춤
+      let s, cx, cy;
+      if (flake){
+        s = Math.min(W / 2.5, H / 2.5); cx = W / 2; cy = H / 2 + s * 0.08;
+      } else {
+        s = W / 2.3; cx = W / 2; cy = H / 2 - s * 0.2;
+      }
+      const T = p => [cx + p[0] * s, cy + p[1] * s];
+      const tf = pts => pts.map(T);
+      const px = Math.max(1, W / 600);
+
+      ctx.lineJoin = "round";
+      if (state.ghost && state.n > 0){
+        for (let k = 0; k < state.n; k++){
+          path(tf(shape(k, state.mode)), flake);
+          ctx.strokeStyle = "rgba(21,23,26," + (0.12 + 0.05 * k) + ")";
+          ctx.lineWidth = px; ctx.setLineDash([4 * px, 4 * px]); ctx.stroke();
+        }
+        ctx.setLineDash([]);
+      }
+      const cur = tf(shape(state.n, state.mode));
+      path(cur, flake);
+      if (flake && state.fill){ ctx.fillStyle = "rgba(255,90,48,.16)"; ctx.fill(); }
+      ctx.strokeStyle = "#ff5a30";
+      ctx.lineWidth = Math.max(px * 1.4, state.n >= 6 ? px : px * 2);
+      ctx.stroke();
+    }
+
+    // ---------- 수치 표시 ----------
+    function sup(x){ return "<sup>" + x + "</sup>"; }
+    function update(){
+      const n = state.n, flake = state.mode === "flake", c = calc(n, state.mode);
+      $("lvl").value = n; $("lvlVal").textContent = n;
+      $("stateBadge").textContent = (flake ? "눈송이" : "코흐곡선") + " · n = " + n;
+      $("figDesc").textContent = flake
+        ? "정삼각형의 각 변을 3등분하고, 가운데 부분 위에 정삼각형을 세운 뒤 그 밑변을 지우는 과정을 반복합니다."
+        : "선분을 3등분하고, 가운데 부분 위에 정삼각형을 세운 뒤 그 밑변을 지우는 과정을 반복합니다.";
+
+      let h = "";
+      h += '<div class="metric"><div class="label">' + (flake ? "변의 개수" : "선분의 개수") + '</div><div class="value num">' + c.sides.toLocaleString() + '</div><div class="sub">' + (flake ? "3·4" : "4") + sup(n) + '</div></div>';
+      h += '<div class="metric"><div class="label">한 변의 길이</div><div class="value num">' + fracText(c.len) + '</div><div class="sub">(1/3)' + sup(n) + '</div></div>';
+      h += '<div class="metric"><div class="label">' + (flake ? "둘레의 길이" : "곡선의 길이") + '</div><div class="value num">' + (c.per[1] === 1 ? c.per[0] : dec(c.per, 4)) + '</div><div class="sub">' + (flake ? "3·(4/3)" : "(4/3)") + sup(n) + (c.per[1] === 1 ? "" : " = " + fracText(c.per)) + '</div></div>';
+      if (flake){
+        h += '<div class="metric"><div class="label">넓이 (처음의 몇 배)</div><div class="value num">' + dec(c.area, 4) + '</div><div class="sub">' + fracText(c.area) + '</div></div>';
+      } else {
+        h += '<div class="metric"><div class="label">처음 선분 대비</div><div class="value num">' + dec(c.per, 4) + '배</div><div class="sub">길이는 한없이 커집니다</div></div>';
+      }
+      $("metrics").innerHTML = h;
+
+      $("formula").innerHTML = flake
+        ? "둘레 &nbsp;L<sub>n</sub> = 3·(4/3)" + sup("n") + " → ∞<br>" +
+          "넓이 S<sub>n</sub> = S<sub>0</sub>{ 8/5 − (3/5)(4/9)" + sup("n") + " }<br>" +
+          "lim S<sub>n</sub> = (8/5)S<sub>0</sub>"
+        : "길이 &nbsp;L<sub>n</sub> = (4/3)" + sup("n") + " → ∞<br>" +
+          "닮음 차원 = log 4 / log 3 ≈ 1.2619";
+
+      let t = "<tr><th>n</th><th>" + (flake ? "변의 수" : "선분 수") + "</th><th>" + (flake ? "둘레" : "길이") + "</th>" + (flake ? "<th>넓이(배)</th>" : "") + "</tr>";
+      for (let i = 0; i <= MAX; i++){
+        const d = calc(i, state.mode);
+        t += '<tr data-n="' + i + '"' + (i === n ? ' class="cur"' : "") + "><td>" + i + "</td><td>" + d.sides.toLocaleString() + "</td><td>" + dec(d.per, 3) + "</td>" + (flake ? "<td>" + dec(d.area, 4) + "</td>" : "") + "</tr>";
+      }
+      $("tbl").innerHTML = t;
+      draw();
+    }
+
+    // ---------- 조작 ----------
+    function setN(n){ state.n = Math.max(0, Math.min(MAX, n)); update(); }
+    function stop(){
+      if (state.timer){ clearInterval(state.timer); state.timer = null; }
+      $("playBtn").textContent = "▶ 자동 재생";
+    }
+    $("lvl").addEventListener("input", e => { stop(); setN(+e.target.value); });
+    $("tbl").addEventListener("click", e => {
+      const tr = e.target.closest("tr[data-n]"); if (tr){ stop(); setN(+tr.dataset.n); }
+    });
+    function setMode(m){
+      state.mode = m;
+      $("modeFlake").classList.toggle("on", m === "flake");
+      $("modeCurve").classList.toggle("on", m === "curve");
+      $("fillChk").disabled = m !== "flake";
+      update();
+    }
+    $("modeFlake").addEventListener("click", () => setMode("flake"));
+    $("modeCurve").addEventListener("click", () => setMode("curve"));
+    $("fillChk").addEventListener("change", e => { state.fill = e.target.checked; draw(); });
+    $("ghostChk").addEventListener("change", e => { state.ghost = e.target.checked; draw(); });
+    $("resetBtn").addEventListener("click", () => { stop(); setN(0); });
+    $("playBtn").addEventListener("click", () => {
+      if (state.timer){ stop(); return; }
+      if (state.n >= MAX) setN(0);
+      $("playBtn").textContent = "❚❚ 멈춤";
+      state.timer = setInterval(() => {
+        if (state.n >= MAX){ stop(); return; }
+        setN(state.n + 1);
+      }, 900);
+    });
+
+    window.addEventListener("resize", resize);
+    if (window.ResizeObserver) new ResizeObserver(resize).observe($("stage"));
+    setMode("flake");
+    resize();
+  })();
+
+</script>
+</body>
+</html>
